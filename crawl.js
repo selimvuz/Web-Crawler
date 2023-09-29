@@ -1,11 +1,39 @@
-const fetchHTML = async (baseURL) => {
+const fetchHTML = async (baseURL, currentURL, pages) => {
     try {
-        const response = await fetch(baseURL);
+        const currentUrlObj = new URL(currentURL)
+        const baseUrlObj = new URL(baseURL)
+        if (currentUrlObj.hostname !== baseUrlObj.hostname){
+            return pages
+        }
+        const response = await fetch(currentURL);
+        if (response.status > 399){
+            // console.log(`Got HTTP error, status code: ${response.status}`)
+            return pages
+        }
+        const contentType = response.headers.get('content-type')
+        if (!contentType.includes('text/html')) {
+            // console.log(`Got non-html response: ${contentType}`)
+            return pages
+        }
+        if (pages[currentURL]) {
+            pages[currentURL]++;
+            return pages;
+        } else if (currentURL !== baseURL) {
+            pages[currentURL] = 1;
+        } else {
+            pages[currentURL] = 0;
+        }
+        // Test
+        console.log("Fetching the URL: ", currentURL)
+        console.log(pages)
         const html = await response.text();
-        let urls = getURLsFromHTML(html, baseURL)
-        return urls
+        let urls = getURLsFromHTML(html, currentURL);
+        for (const url of urls) {
+            pages = await fetchHTML(baseURL, url, pages)
+        }
+        return pages
     } catch (error) {
-        console.error(`Error fetching HTML: `, error)
+        console.error(`Error fetching HTML: `, currentURL, error.message)
     }
 }
 
@@ -20,13 +48,15 @@ const getURLsFromHTML = (htmlBody, baseURL) => {
     const a = dom.window.document.querySelectorAll("a");
     // Push the links to url array
     for (const tag of a) {
-        urls.push(baseURL.slice(0, -1) + tag.href)
+        if (tag.href !== baseURL && tag.href !== "/") {
+        urls.push(baseURL + tag.href)
+        }
     }
     for (let i = 0; i < urls.length; i++) {
         // Normalize the element at index i
         let normalized = normalizeURL(urls[i]);
         urls[i] = normalized;
-      }
+    }
     return urls
 }
 
@@ -40,11 +70,11 @@ const normalizeURL = (url) => {
     }
 
     // Removing patterns from regex array
-    for (const pattern of httpPatterns) {
+    /* for (const pattern of httpPatterns) {
         if (pattern.test(url)) {
             url = url.replace(pattern, "");
         }
-    }
+    } */
     return url
 }
 

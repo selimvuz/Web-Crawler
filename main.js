@@ -1,6 +1,7 @@
 async function main() {
     const fetchHTML = require("./crawl");
-    result =  await fetchHTML(`https://leetcode.com/`);
+    url = "https://garmoth.com"
+    result =  await fetchHTML(url, url, {});
     console.log(result)
 }
 
