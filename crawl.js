@@ -3,16 +3,17 @@ const fetchHTML = async (baseURL, currentURL, pages) => {
         const currentUrlObj = new URL(currentURL)
         const baseUrlObj = new URL(baseURL)
         if (currentUrlObj.hostname !== baseUrlObj.hostname){
+            console.log("Hostname is different, skipping...");
             return pages
         }
         const response = await fetch(currentURL);
         if (response.status > 399){
-            // console.log(`Got HTTP error, status code: ${response.status}`)
+            console.log("Got HTTP error, skipping. Please wait...");
             return pages
         }
         const contentType = response.headers.get('content-type')
         if (!contentType.includes('text/html')) {
-            // console.log(`Got non-html response: ${contentType}`)
+            console.log("Got non-html response, skipping...");
             return pages
         }
         if (pages[currentURL]) {
@@ -25,7 +26,7 @@ const fetchHTML = async (baseURL, currentURL, pages) => {
         }
         // Test
         console.log("Fetching the URL: ", currentURL)
-        console.log(pages)
+        // console.log(pages)
         const html = await response.text();
         let urls = getURLsFromHTML(html, currentURL);
         for (const url of urls) {
@@ -49,34 +50,44 @@ const getURLsFromHTML = (htmlBody, baseURL) => {
     // Push the links to url array
     for (const tag of a) {
         if (tag.href !== baseURL && tag.href !== "/") {
-        urls.push(baseURL + tag.href)
+            if (baseURL.slice(-1) === "/") {
+                urls.push(baseURL.slice(0, -1) + tag.href)
+            } else {
+                urls.push(baseURL + tag.href)
+            }
         }
     }
     for (let i = 0; i < urls.length; i++) {
-        // Normalize the element at index i
-        let normalized = normalizeURL(urls[i]);
+        // Remove the last slash for index i
+        let normalized = slashRemover(urls[i]);
         urls[i] = normalized;
     }
     return urls
 }
 
-const normalizeURL = (url) => {
-    // Define regular expressions to remove from url
-    const httpPatterns = [/^https:\/\//, /^http:\/\//]
-
+const slashRemover = (url) => {
     // If there is a slash at the end of url, remove it
     if (url.slice(-1) === "/") {
         url = url.slice(0, -1)
     }
+    return url
+}
 
-    // Removing patterns from regex array
-    /* for (const pattern of httpPatterns) {
+const removeScheme = (url) => {
+    // Define regular expressions to remove from url
+    const httpPatterns = [/^https:\/\//, /^http:\/\//]
+
+    // Remove the patterns from url
+    for (const pattern of httpPatterns) {
         if (pattern.test(url)) {
             url = url.replace(pattern, "");
         }
-    } */
+    }
     return url
 }
 
 // Export the function. Test suites don't support ES so...
-module.exports = fetchHTML;
+module.exports = {
+    fetchHTML,
+    removeScheme
+}
