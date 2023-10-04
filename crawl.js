@@ -1,23 +1,26 @@
 let errorCount = 0; // Error counter
+const MAX_DEPTH = 1; // Maximum depth for crawling  
 
-const fetchHTML = async (baseURL, currentURL, pages) => {
+const fetchHTML = async (baseURL, currentURL, pages, depth) => {
     try {
+        if (depth > MAX_DEPTH) {
+            // console.log("Maximum depth exceeded, stopping... ", errorCount++)
+            return pages; // Stop crawling if depth exceeds maximum
+        }
+        await delay(100); // Wait 0.1 second for each request. Don't be rude.
         const currentUrlObj = new URL(currentURL)
         const baseUrlObj = new URL(baseURL)
         if (currentUrlObj.hostname !== baseUrlObj.hostname){
-            console.clear() // Clear the console
             console.log("Hostname is different, skipping... ", errorCount++);
             return pages
         }
         const response = await fetch(currentURL);
         if (response.status > 399){
-            console.clear() // Clear the console
             console.log("Got HTTP error, skipping. Please wait... ", errorCount++);
             return pages
         }
         const contentType = response.headers.get('content-type')
         if (!contentType.includes('text/html')) {
-            console.clear() // Clear the console
             console.log("Got non-html response, skipping... ", errorCount++);
             return pages
         }
@@ -35,7 +38,7 @@ const fetchHTML = async (baseURL, currentURL, pages) => {
         const html = await response.text();
         let urls = getURLsFromHTML(html, currentURL);
         for (const url of urls) {
-            pages = await fetchHTML(baseURL, url, pages)
+            pages = await fetchHTML(baseURL, url, pages, depth + 1)
         }
         return pages
     } catch (error) {
@@ -54,7 +57,7 @@ const getURLsFromHTML = (htmlBody, baseURL) => {
     const a = dom.window.document.querySelectorAll("a");
     // Push the links to url array
     for (const tag of a) {
-        if (tag.href !== baseURL && tag.href !== "/") {
+        if (tag.href !== baseURL && tag.href !== "/" && tag.href !== "" && tag.href !== "#" && !tag.href.startsWith("javascript") && tag.href[0] === "/") {
             if (baseURL.slice(-1) === "/") {
                 urls.push(baseURL.slice(0, -1) + tag.href)
             } else {
@@ -89,6 +92,10 @@ const removeScheme = (url) => {
         }
     }
     return url
+}
+
+const delay = (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // Export the function. Test suites don't support ES so...

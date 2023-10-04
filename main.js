@@ -1,8 +1,8 @@
 async function main() {
     const {fetchHTML, removeScheme} = require("./crawl");
-    url = "https://www.boot.dev/"
+    url = "https://leetcode.com/"
 
-    sloppyResult = await fetchHTML(url, url, {});
+    sloppyResult = await fetchHTML(url, url, {}, 0);
     let refinedResult = {};
 
     for (let key in sloppyResult) {
