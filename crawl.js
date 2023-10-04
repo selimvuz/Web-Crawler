@@ -1,19 +1,24 @@
+let errorCount = 0; // Error counter
+
 const fetchHTML = async (baseURL, currentURL, pages) => {
     try {
         const currentUrlObj = new URL(currentURL)
         const baseUrlObj = new URL(baseURL)
         if (currentUrlObj.hostname !== baseUrlObj.hostname){
-            console.log("Hostname is different, skipping...");
+            console.clear() // Clear the console
+            console.log("Hostname is different, skipping... ", errorCount++);
             return pages
         }
         const response = await fetch(currentURL);
         if (response.status > 399){
-            console.log("Got HTTP error, skipping. Please wait...");
+            console.clear() // Clear the console
+            console.log("Got HTTP error, skipping. Please wait... ", errorCount++);
             return pages
         }
         const contentType = response.headers.get('content-type')
         if (!contentType.includes('text/html')) {
-            console.log("Got non-html response, skipping...");
+            console.clear() // Clear the console
+            console.log("Got non-html response, skipping... ", errorCount++);
             return pages
         }
         if (pages[currentURL]) {
