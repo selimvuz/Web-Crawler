@@ -1,10 +1,12 @@
+import { JSDOM } from 'jsdom';
+
 let errorCount = 0; // Error counter
 const MAX_DEPTH = 1; // Maximum depth for crawling  
 
-const fetchHTML = async (baseURL, currentURL, pages, depth) => {
+export const fetchHTML = async (baseURL, currentURL, pages, depth) => {
     try {
         if (depth > MAX_DEPTH) {
-            // console.log("Maximum depth exceeded, stopping... ", errorCount++)
+            errorCount++ // Increase error count
             return pages; // Stop crawling if depth exceeds maximum
         }
         await delay(100); // Wait 0.1 second for each request. Don't be rude.
@@ -49,8 +51,6 @@ const fetchHTML = async (baseURL, currentURL, pages, depth) => {
 const getURLsFromHTML = (htmlBody, baseURL) => {
     // Link parts of a tags will be stored in this array.
     const urls = []
-    // JSDOM
-    const {JSDOM} = require("jsdom");
     // Create an object model from html
     const dom = new JSDOM(htmlBody);
     // Select all `a` tags
@@ -81,7 +81,7 @@ const slashRemover = (url) => {
     return url
 }
 
-const removeScheme = (url) => {
+export const removeScheme = (url) => {
     // Define regular expressions to remove from url
     const httpPatterns = [/^https:\/\//, /^http:\/\//]
 
@@ -91,6 +91,7 @@ const removeScheme = (url) => {
             url = url.replace(pattern, "");
         }
     }
+    // Export total number of errors at last for updated value
     return url
 }
 
@@ -98,8 +99,6 @@ const delay = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Export the function. Test suites don't support ES so...
-module.exports = {
-    fetchHTML,
-    removeScheme
+export const errorGetter = () => {
+    return errorCount;
 }
